@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <Windows.h>
+#pragma comment (lib, "winmm.lib")
 //#include <conio.h>
 //#include <string.h>
 #define IDM_FILE_NEW 1
@@ -10,7 +11,10 @@
 #define IDM_FILE_QUIT 3
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-HBITMAP hBitmap;
+HBITMAP hbtm;
+void LoadImageBtm(HWND hwnd, wchar_t path[]);
+wchar_t background[] = L"D:\\Nikita\\image\\background.bmp";
+
 
 void AddMenus(HWND hwnd) { //Menu
 
@@ -31,35 +35,17 @@ void AddMenus(HWND hwnd) { //Menu
 
 LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	static HDC background;
-	static BITMAP bm;
-	HDC hdc = GetDC(hwnd);
-	HWND hsti;
-
 
 	switch (msg) {
 
-	case WM_DESTROY: 
-		DeleteObject(hBitmap);
-		PostQuitMessage(0);
-		break;
-	
-
 	case WM_CREATE:
 		AddMenus(hwnd);
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("C:\\Users\\Bubaleg\\Desktop\\papka govna\\imagebackground.bmp")
-												, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		GetObject(hBitmap, sizeof(bm), &bm);
-		background = CreateCompatibleDC(hdc);
-		SelectObject(background, hBitmap);
-	/*	hsti = CreateWindowW(L"Static", L"",
-			WS_CHILD | WS_VISIBLE | SS_BITMAP,
-			5, 5, 300, 300, hwnd, (HMENU)1, NULL, NULL);
-
-		SendMessage(hsti, STM_SETIMAGE,
-			(WPARAM)IMAGE_BITMAP, (LPARAM)hBitmap);*/
+		PlaySoundW(TEXT("D:\\Nikita\\sound\\soundmario.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		break;
 
+	case WM_PAINT:
+		LoadImageBtm(hwnd,background);
+		break;
 
 	case WM_COMMAND:
 
@@ -78,7 +64,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		}
 
 		break;
-
+		
 	case WM_KEYDOWN:
 
 		if (wparam == VK_ESCAPE) {
@@ -91,6 +77,13 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 				SendMessage(hwnd, WM_CLOSE, 0, 0);
 			}
 		}
+		break;
+
+	case WM_DESTROY:
+		DeleteObject(hbtm);
+		PostQuitMessage(0);
+		break;
+
 	}
 		return DefWindowProc(hwnd, msg, wparam, lparam);
 	}
@@ -123,17 +116,42 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		wc.lpszClassName,
 		L"shMario",
 		WS_OVERLAPPEDWINDOW,
-		0, 0, 1200, 675,
+		0, 0, 1215, 734,
 		NULL, NULL, hInstance, NULL);
+
+	HDC hdc = GetDC(hwnd);
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
+
+	LoadImageBtm(hwnd, background);
+
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
+		
 	}
-	return msg.wParam;
+	return (int) msg.wParam;
 }
 
 
+void LoadImageBtm(HWND hwnd, wchar_t path[]) { //Load background
 
+	HDC hdc;
+	PAINTSTRUCT ps;
+	BITMAP bitmap;
+	HDC hdcMem;
+	HGDIOBJ oldBitmap;
+
+	hbtm = LoadImageW(NULL, path,
+		IMAGE_BITMAP, 1200, 675, LR_LOADFROMFILE);
+	hdc = BeginPaint(hwnd, &ps);
+	hdcMem = CreateCompatibleDC(hdc);
+	oldBitmap = SelectObject(hdcMem, hbtm);
+	GetObject(hbtm, sizeof(bitmap), &bitmap);
+	BitBlt(hdc, 0, 0, bitmap.bmWidth, bitmap.bmHeight,
+		hdcMem, 0, 0, SRCCOPY);
+	SelectObject(hdcMem, oldBitmap);
+	DeleteDC(hdcMem);
+	EndPaint(hwnd, &ps);
+}
