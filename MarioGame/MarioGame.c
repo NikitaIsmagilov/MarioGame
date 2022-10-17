@@ -3,14 +3,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <Windows.h>
+#include <math.h>
 #pragma comment (lib, "winmm.lib")
 //#include <conio.h>
 //#include <string.h>
 #define IDM_FILE_NEW 1
 #define IDM_FILE_OPEN 2
 #define IDM_FILE_QUIT 3
+#define mapWidth 1300
+#define mapHeight 730
 
 static HDC tube;
+static HDC stone;
+static HDC mario;
 static HBITMAP hBitmap;
 static BITMAP bm;
 static RECT rc;
@@ -18,24 +23,30 @@ HDC hdc;
 PAINTSTRUCT ps;
 HBITMAP hbtm;
 
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+struct SObject
+{
+	int xPos, yPos;
+} mario1;
 
+
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)//Main window
 {
 	HWND hwnd;
 	MSG msg;
-	WNDCLASSEX wc;
+	WNDCLASSEX wc;	
+
+	mario1.xPos = 100;
+	mario1.yPos = 535;
 
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);;
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	//wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	wc.hbrBackground = CreatePatternBrush((HBITMAP)LoadImageW(NULL, (LPCWSTR)L"D:\\Nikita\\image\\background.bmp",
 		IMAGE_BITMAP, 0, 0, LR_DEFAULTSIZE | LR_LOADFROMFILE));
-	//(HBRUSH)GetStockObject(WHITE_BRUSH);
 	wc.hInstance = hInstance;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
@@ -43,32 +54,38 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	wc.lpszMenuName = NULL;
 	wc.lpszClassName = L"WinMainClass";
 
+
+
 	RegisterClassEx(&wc);
 	hwnd = CreateWindow(
 		wc.lpszClassName,
 		L"shMario",
 		WS_OVERLAPPEDWINDOW,
-		0, 0, 1300, 734,
+		0, 0, mapWidth, mapHeight,
 		NULL, NULL, hInstance, NULL);
 
 	HDC hdc = GetDC(hwnd);
 	ShowWindow(hwnd, nCmdShow);
-	UpdateWindow(hwnd);
 
-	//LoadImageBtm(hwnd, background);
 
-	while (GetMessage(&msg, NULL, 0, 0))
+	
+	while (1) 
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-
+		if (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) { // check the messages queue
+			if (msg.message == WM_QUIT) break;
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else 
+		{
+			move(hwnd);
+			Sleep(50);
+		}
 	}
+	return 0;
+
 	return (int)msg.wParam;
 }
-
-//void LoadImageBtm(HWND hwnd, wchar_t path[]);
-//wchar_t background[] = L"D:\\Nikita\\image\\background.bmp";
-
 
 void AddMenus(HWND hwnd) { //Menu
 
@@ -87,6 +104,7 @@ void AddMenus(HWND hwnd) { //Menu
 	SetMenu(hwnd, hMenubar);
 }
 
+
 LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	
@@ -96,25 +114,46 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		BITMAP bitmap;
 		HDC hdcMem;
 		HGDIOBJ oldBitmap;
+
+		wchar_t buf[40];
+
 	
 	switch (msg) {
 
 	case WM_CREATE:
+
+
+
 		AddMenus(hwnd);
 		PlaySoundW(TEXT("D:\\Nikita\\sound\\soundmario.wav"), NULL, SND_FILENAME | SND_ASYNC);
+		
+		hdc = GetDC(hwnd);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\tube.bmp"), 
+	
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\tube.bmp"), //Tube image
 						   IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		//GetObject(hBitmap, sizeof(bm), &bm);
-		//hdc = GetDC(hwnd);
-		//tube = CreateCompatibleDC(hdc);
-		//SelectObject(tube, hBitmap);
-		////If cant load image 
-		if (hBitmap == NULL) {  
-			MessageBoxW(hwnd, L"Failed to load image", L"Error", MB_OK);
-		}
+		GetObject(hBitmap, sizeof(bm), &bm);
+		tube = CreateCompatibleDC(hdc);
+		SelectObject(tube, hBitmap);
 
-		//ReleaseDC(hwnd, hdc);
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\stone.bmp"), //Stone image
+						   IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		GetObject(hBitmap, sizeof(bm), &bm);
+		stone = CreateCompatibleDC(hdc);
+		SelectObject(stone, hBitmap);
+
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\mario.bmp"), //mario image
+						   IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		GetObject(hBitmap, sizeof(bm), &bm);
+		mario = CreateCompatibleDC(hdc);
+		SelectObject(mario, hBitmap);
+
+		//If cant load image 
+
+		if (hBitmap == NULL) {  
+			MessageBox(hwnd, L"Failed to load image", L"Error", MB_OK);
+		}
+		
 		break;
 
 	case WM_PAINT:
@@ -122,15 +161,21 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		hdcMem = CreateCompatibleDC(hdc);
 		oldBitmap = SelectObject(hdcMem, hBitmap);
 
-		GetObject(hBitmap, sizeof(bitmap), &bitmap);
-		BitBlt(hdc, 1100, 340, 157, 243, hdcMem, 0, 0, SRCCOPY);
+		BitBlt(hdc, 1100, 340, 157, 243, tube, 0, 0, SRCCOPY); // tube
+		BitBlt(hdc, 370, 370, 66, 46, stone, 0, 0, SRCCOPY); //stone
+		BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, mario, 0, 0, SRCCOPY); //mario
 
+
+		wsprintf(buf, TEXT("Mario X position %i"), mario1.xPos);
+
+
+		TextOutW(hdc, 100, 100, buf, lstrlen(buf));
+		InvalidateRect(hwnd, 0, 0);
+		
 		SelectObject(hdcMem, oldBitmap);
 		DeleteDC(hdcMem);
-		//HDC memDC = CreateCompatibleDC(hwnd);
-		//BitBlt(memDC, /*1350*/0, /*340*/0, 157, 243, tube, 0, 0, SRCCOPY);
 		EndPaint(hwnd, &ps);
-		//LoadImageBtm(hwnd,background);
+		
 		break;
 
 	case WM_COMMAND:
@@ -153,9 +198,15 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		
 	case WM_KEYDOWN:
 
+		if (wparam == VK_RIGHT)
+		{
+			mario1.xPos += 100;
+			SendMessage(hwnd, WM_PAINT, 0, 0);
+		}
+
 		if (wparam == VK_ESCAPE) {
 
-			int ret = MessageBoxW(hwnd, L"Are you gay?",
+			int ret = MessageBoxW(hwnd, L"Quit?",
 				L"Message", MB_OKCANCEL);
 
 			if (ret == IDOK) {
@@ -175,28 +226,8 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	}
 
 
+int move(HWND hwnd)
+{
+	if (GetKeyState('D') < 0)  mario1.xPos = mario1.xPos + 115; 
+}
 
-
-
-
-
-//void LoadImageBtm(HWND hwnd, wchar_t path[]) { //Load background
-//
-//	HDC hdc;
-//	PAINTSTRUCT ps;
-//	BITMAP bitmap;
-//	HDC hdcMem;
-//	HGDIOBJ oldBitmap;
-//
-//	hbtm = LoadImageW(NULL, path,
-//		IMAGE_BITMAP, 1200, 675, LR_LOADFROMFILE);
-//	hdc = BeginPaint(hwnd, &ps);
-//	hdcMem = CreateCompatibleDC(hdc);
-//	oldBitmap = SelectObject(hdcMem, hbtm);
-//	GetObject(hbtm, sizeof(bitmap), &bitmap);
-//	BitBlt(hdc, 0, 0, bitmap.bmWidth, bitmap.bmHeight,
-//		hdcMem, 0, 0, SRCCOPY);
-//	SelectObject(hdcMem, oldBitmap);
-//	DeleteDC(hdcMem);
-//	EndPaint(hwnd, &ps);
-//}
