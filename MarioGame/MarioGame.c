@@ -12,7 +12,7 @@
 #define IDM_FILE_QUIT 3
 #define mapWidth 1300
 #define mapHeight 730
-
+#define IdBaseTimer 1
 static HDC tube;
 static HDC stone;
 static HDC mario;
@@ -26,6 +26,7 @@ HBITMAP hbtm;
 struct SObject
 {
 	int xPos, yPos;
+	int vertSpeed;
 } mario1;
 
 
@@ -79,7 +80,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		else 
 		{
 			move(hwnd);
-			Sleep(50);
+			Sleep(75);
 		}
 	}
 	return 0;
@@ -122,7 +123,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 	case WM_CREATE:
 
-
+		SetTimer(hwnd, IdBaseTimer, 10, NULL);
 
 		AddMenus(hwnd);
 		PlaySoundW(TEXT("D:\\Nikita\\sound\\soundmario.wav"), NULL, SND_FILENAME | SND_ASYNC);
@@ -170,8 +171,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 
 		TextOutW(hdc, 100, 100, buf, lstrlen(buf));
-		InvalidateRect(hwnd, 0, 0);
-		
+
 		SelectObject(hdcMem, oldBitmap);
 		DeleteDC(hdcMem);
 		EndPaint(hwnd, &ps);
@@ -216,6 +216,15 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		}
 		break;
 
+	case WM_TIMER:
+		switch (wparam)
+		{
+		case IdBaseTimer:
+			InvalidateRect(hwnd, 0, 0);
+			break;
+		} break;
+
+
 	case WM_DESTROY:
 		DeleteObject(hbtm);
 		PostQuitMessage(0);
@@ -228,6 +237,8 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 int move(HWND hwnd)
 {
-	if (GetKeyState('D') < 0)  mario1.xPos = mario1.xPos + 115; 
+	if (GetKeyState('W') < 0)  mario1.yPos = mario1.yPos - 20;
+	if (GetKeyState('A') < 0)  mario1.xPos = mario1.xPos - 20;
+	if (GetKeyState('D') < 0)  mario1.xPos = mario1.xPos + 20;
 }
 
