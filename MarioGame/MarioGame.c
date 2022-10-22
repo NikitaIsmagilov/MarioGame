@@ -10,12 +10,14 @@
 #define IDM_FILE_NEW 1
 #define IDM_FILE_OPEN 2
 #define IDM_FILE_QUIT 3
-#define mapWidth 1300
+#define mapWidth 1216
 #define mapHeight 730
 #define IdBaseTimer 1
 static HDC tube;
 static HDC stone;
 static HDC mario;
+static HDC walk;
+static HDC background;
 static HBITMAP hBitmap;
 static BITMAP bm;
 static RECT rc;
@@ -23,10 +25,10 @@ HDC hdc;
 PAINTSTRUCT ps;
 HBITMAP hbtm;
 
+
 struct SObject
 {
 	int xPos, yPos;
-	int vertSpeed;
 } mario1;
 
 
@@ -46,8 +48,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);;
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = CreatePatternBrush((HBITMAP)LoadImageW(NULL, (LPCWSTR)L"D:\\Nikita\\image\\background.bmp",
-		IMAGE_BITMAP, 0, 0, LR_DEFAULTSIZE | LR_LOADFROMFILE));
+	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+		//CreatePatternBrush((HBITMAP)LoadImageW(NULL, (LPCWSTR)L"D:\\Nikita\\image\\background.bmp",
+		//IMAGE_BITMAP, 0, 0, LR_DEFAULTSIZE | LR_LOADFROMFILE));
 	wc.hInstance = hInstance;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
@@ -79,14 +82,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		}
 		else 
 		{
-			move(hwnd);
-			Sleep(75);
+			drow(hdc);
+			Move(hwnd);
+			Sleep(50);
 		}
 	}
 	return 0;
 
 	return (int)msg.wParam;
 }
+
 
 void AddMenus(HWND hwnd) { //Menu
 
@@ -113,10 +118,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		HDC hdc;
 		PAINTSTRUCT ps;
 		BITMAP bitmap;
-		HDC hdcMem;
-		HGDIOBJ oldBitmap;
-
-		wchar_t buf[40];
+		
 
 	
 	switch (msg) {
@@ -126,10 +128,15 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		SetTimer(hwnd, IdBaseTimer, 10, NULL);
 
 		AddMenus(hwnd);
-		PlaySoundW(TEXT("D:\\Nikita\\sound\\soundmario.wav"), NULL, SND_FILENAME | SND_ASYNC);
+		//PlaySoundW(TEXT("D:\\Nikita\\sound\\soundmario.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		
 		hdc = GetDC(hwnd);
 
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\background.bmp"), //Background image
+			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		GetObject(hBitmap, sizeof(bm), &bm);
+		background = CreateCompatibleDC(hdc);
+		SelectObject(background, hBitmap);
 	
 		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\tube.bmp"), //Tube image
 						   IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
@@ -149,6 +156,12 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		mario = CreateCompatibleDC(hdc);
 		SelectObject(mario, hBitmap);
 
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\walk.bmp"), //animation image
+			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		GetObject(hBitmap, sizeof(bm), &bm);
+		walk = CreateCompatibleDC(hdc);
+		SelectObject(walk, hBitmap);
+
 		//If cant load image 
 
 		if (hBitmap == NULL) {  
@@ -159,21 +172,9 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 	case WM_PAINT:
 		hdc = BeginPaint(hwnd, &ps);
-		hdcMem = CreateCompatibleDC(hdc);
-		oldBitmap = SelectObject(hdcMem, hBitmap);
+		
+		drow(hdc);
 
-		BitBlt(hdc, 1100, 340, 157, 243, tube, 0, 0, SRCCOPY); // tube
-		BitBlt(hdc, 370, 370, 66, 46, stone, 0, 0, SRCCOPY); //stone
-		BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, mario, 0, 0, SRCCOPY); //mario
-
-
-		wsprintf(buf, TEXT("Mario X position %i"), mario1.xPos);
-
-
-		TextOutW(hdc, 100, 100, buf, lstrlen(buf));
-
-		SelectObject(hdcMem, oldBitmap);
-		DeleteDC(hdcMem);
 		EndPaint(hwnd, &ps);
 		
 		break;
@@ -235,10 +236,43 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	}
 
 
-int move(HWND hwnd)
+int drow(HDC hdc)
 {
-	if (GetKeyState('W') < 0)  mario1.yPos = mario1.yPos - 20;
-	if (GetKeyState('A') < 0)  mario1.xPos = mario1.xPos - 20;
-	if (GetKeyState('D') < 0)  mario1.xPos = mario1.xPos + 20;
+	HDC hdcMem;
+	wchar_t bufY[40];
+	wchar_t bufX[40];
+
+	HGDIOBJ oldBitmap;
+
+	hdcMem = CreateCompatibleDC(hdc);
+	oldBitmap = SelectObject(hdcMem, hBitmap);
+
+	BitBlt(hdc, 0, 0, mapWidth, mapHeight, background, 0, 0, SRCCOPY); // background
+	BitBlt(hdc, 1035, 340, 157, 243, tube, 0, 0, SRCCOPY); // tube
+	BitBlt(hdc, 370, 370, 66, 46, stone, 0, 0, SRCCOPY); //stone
+	BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, mario, 0, 0, SRCCOPY); //mario
+
+
+	wsprintf(bufX, TEXT("Mario X position %i"), mario1.xPos);
+	wsprintf(bufY, TEXT("Mario Y position %i"), mario1.yPos);
+
+
+	TextOutW(hdc, 100, 100, bufX, lstrlen(bufX));
+	TextOutW(hdc, 100, 130, bufY, lstrlen(bufY));
+
+
+	SelectObject(hdcMem, oldBitmap);
+	DeleteDC(hdcMem);
 }
+
+
+int Move(HWND hwnd)          //X 0 Y 535
+{
+	
+	if (mario1.yPos < 535)	mario1.yPos += 25;
+	if (GetKeyState('A') < 0 && mario1.xPos > 0)  mario1.xPos = mario1.xPos - 20;
+	if (GetKeyState('D') < 0)  mario1.xPos = mario1.xPos + 20;
+	if (GetKeyState(VK_SPACE) < 0) mario1.yPos = mario1.yPos - 100;
+}
+
 
