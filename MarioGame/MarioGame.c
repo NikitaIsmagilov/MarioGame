@@ -21,27 +21,54 @@ static HDC background;
 static HBITMAP hBitmap;
 static BITMAP bm;
 static RECT rc;
+HWND hwnd;
 HDC hdc;
 PAINTSTRUCT ps;
 HBITMAP hbtm;
 
 
-struct SObject
+typedef struct SObject
 {
 	int xPos, yPos;
-} mario1;
+	BOOL JumpController;
+	int runAnimation;
+	int speedX, speedY;
+} Mario, *Pmario;
 
+int JumpBase;
+
+void Jump(Pmario pmario)
+{
+	if (!pmario->JumpController) {
+		JumpBase = pmario->yPos;
+		pmario->JumpController = TRUE;
+		pmario->speedY = -40;
+	}
+}
+
+void MarioMove(Pmario pmario) {
+	Move(hwnd);
+	if (pmario->runAnimation == 3) pmario->runAnimation = 0;
+	if (pmario->yPos - JumpBase <= -200) pmario->speedY *= -1;
+	pmario->xPos += pmario->speedX;
+	if (pmario->speedX != 0) pmario->runAnimation = pmario->runAnimation++;
+	pmario->yPos += pmario->speedY;
+	if (pmario->yPos == JumpBase) {
+		pmario->JumpController = FALSE;
+		pmario->speedY = 0;
+	}
+
+}
+
+Mario mario1;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)//Main window
 {
-	HWND hwnd;
 	MSG msg;
-	WNDCLASSEX wc;	
+	WNDCLASSEX wc;
 
-	mario1.xPos = 100;
-	mario1.yPos = 535;
 
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -83,8 +110,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		else 
 		{
 			drow(hdc);
-			Move(hwnd);
-			Sleep(50);
+			InvalidateRect(hwnd, 0, 0);
+			Sleep(75);
 		}
 	}
 	return 0;
@@ -131,6 +158,11 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		//PlaySoundW(TEXT("D:\\Nikita\\sound\\soundmario.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		
 		hdc = GetDC(hwnd);
+
+		mario1.xPos = 100;
+		mario1.yPos = 535;
+		mario1.JumpController = FALSE;
+		mario1.runAnimation = 0;
 
 		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\background.bmp"), //Background image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
@@ -199,11 +231,11 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		
 	case WM_KEYDOWN:
 
-		if (wparam == VK_RIGHT)
+		/*if (wparam == VK_RIGHT)
 		{
 			mario1.xPos += 100;
 			SendMessage(hwnd, WM_PAINT, 0, 0);
-		}
+		}*/
 
 		if (wparam == VK_ESCAPE) {
 
@@ -221,7 +253,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		switch (wparam)
 		{
 		case IdBaseTimer:
-			InvalidateRect(hwnd, 0, 0);
+			MarioMove(&mario1);
 			break;
 		} break;
 
@@ -249,11 +281,19 @@ int drow(HDC hdc)
 
 	BitBlt(hdc, 0, 0, mapWidth, mapHeight, background, 0, 0, SRCCOPY); // background
 	BitBlt(hdc, 1035, 340, 157, 243, tube, 0, 0, SRCCOPY); // tube
-	BitBlt(hdc, 370, 370, 66, 46, stone, 0, 0, SRCCOPY); //stone
-	BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, mario, 0, 0, SRCCOPY); //mario
+	BitBlt(hdc, 370, 410, 66, 46, stone, 0, 0, SRCCOPY); //stone
+	
+	
+	if (!mario1.speedX) mario1.runAnimation = 0;//animation mario
+	if (mario1.runAnimation == 0 || mario1.runAnimation == 1){
+		BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, mario, 0, 0, SRCCOPY);
+	}
+	else if (mario1.runAnimation == 2 || mario1.runAnimation == 3) {
+		BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, walk, 0, 0, SRCCOPY);
+	}
 
 
-	wsprintf(bufX, TEXT("Mario X position %i"), mario1.xPos);
+	wsprintf(bufX, TEXT("Mario X position %i"), mario1.xPos); //Show position mario on screen
 	wsprintf(bufY, TEXT("Mario Y position %i"), mario1.yPos);
 
 
@@ -268,11 +308,10 @@ int drow(HDC hdc)
 
 int Move(HWND hwnd)          //X 0 Y 535
 {
-	
-	if (mario1.yPos < 535)	mario1.yPos += 25;
-	if (GetKeyState('A') < 0 && mario1.xPos > 0)  mario1.xPos = mario1.xPos - 20;
-	if (GetKeyState('D') < 0)  mario1.xPos = mario1.xPos + 20;
-	if (GetKeyState(VK_SPACE) < 0) mario1.yPos = mario1.yPos - 100;
+	mario1.speedX = 0;
+	if (GetKeyState('A') < 0 && mario1.xPos > 0)  mario1.speedX = - 20;
+	if (GetKeyState('D') < 0)  mario1.speedX = 20;
+	if (GetKeyState(VK_SPACE) < 0) Jump(&mario1);
 }
 
 
