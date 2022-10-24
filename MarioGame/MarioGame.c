@@ -13,11 +13,17 @@
 #define mapWidth 1216
 #define mapHeight 730
 #define IdBaseTimer 1
+
+static HDC background;
 static HDC tube;
 static HDC stone;
 static HDC mario;
+static HDC marioL;
 static HDC walk;
-static HDC background;
+static HDC walkL;
+static HDC jumping;
+static HDC jumpingL;
+
 static HBITMAP hBitmap;
 static BITMAP bm;
 static RECT rc;
@@ -30,9 +36,10 @@ HBITMAP hbtm;
 typedef struct SObject
 {
 	int xPos, yPos;
-	BOOL JumpController;
 	int runAnimation;
 	int speedX, speedY;
+	BOOL JumpController;
+
 } Mario, *Pmario;
 
 int JumpBase;
@@ -64,7 +71,7 @@ Mario mario1;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)//Main window
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)	//Main window
 {
 	MSG msg;
 	WNDCLASSEX wc;
@@ -144,8 +151,6 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		static HBITMAP hBitmap;
 		HDC hdc;
 		PAINTSTRUCT ps;
-		BITMAP bitmap;
-		
 
 	
 	switch (msg) {
@@ -188,12 +193,35 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		mario = CreateCompatibleDC(hdc);
 		SelectObject(mario, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\walk.bmp"), //animation image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\marioL.bmp"), //mario left image
+			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		GetObject(hBitmap, sizeof(bm), &bm);
+		marioL = CreateCompatibleDC(hdc);
+		SelectObject(marioL, hBitmap);
+
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\walk.bmp"), //run image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		walk = CreateCompatibleDC(hdc);
 		SelectObject(walk, hBitmap);
 
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\walkL.bmp"), //run to left image
+			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		GetObject(hBitmap, sizeof(bm), &bm);
+		walkL = CreateCompatibleDC(hdc);
+		SelectObject(walkL, hBitmap);
+
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\jumping.bmp"), //jumping image
+			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		GetObject(hBitmap, sizeof(bm), &bm);
+		jumping = CreateCompatibleDC(hdc);
+		SelectObject(jumping, hBitmap);
+
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\jumpingL.bmp"), //jumping to left image
+			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		GetObject(hBitmap, sizeof(bm), &bm);
+		jumpingL = CreateCompatibleDC(hdc);
+		SelectObject(jumpingL, hBitmap);
 		//If cant load image 
 
 		if (hBitmap == NULL) {  
@@ -284,14 +312,28 @@ int drow(HDC hdc)
 	BitBlt(hdc, 370, 410, 66, 46, stone, 0, 0, SRCCOPY); //stone
 	
 	
-	if (!mario1.speedX) mario1.runAnimation = 0;//animation mario
+	if (!mario1.speedX) mario1.runAnimation = 0;									//animation mario
+	
+	
 	if (mario1.runAnimation == 0 || mario1.runAnimation == 1){
-		BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, mario, 0, 0, SRCCOPY);
+		if (mario1.speedX < 0) 
+			 BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, marioL, 0, 0, SRCCOPY);
+		else BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, mario, 0, 0, SRCCOPY);      
 	}
-	else if (mario1.runAnimation == 2 || mario1.runAnimation == 3) {
-		BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, walk, 0, 0, SRCCOPY);
-	}
+	else if (mario1.runAnimation == 2 || mario1.runAnimation == 3){
+		if (mario1.speedX <0 ) 
+			 BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, walkL, 0, 0, SRCCOPY);    
+		else BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, walk, 0, 0, SRCCOPY);
 
+	}
+	
+	
+	if (mario1.JumpController == TRUE && mario1.speedX >= 0) {
+		BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, jumping, 0, 0, SRCCOPY);
+	}
+	if (mario1.JumpController == TRUE && mario1.speedX < 0) {
+		BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, jumpingL, 0, 0, SRCCOPY);
+	}
 
 	wsprintf(bufX, TEXT("Mario X position %i"), mario1.xPos); //Show position mario on screen
 	wsprintf(bufY, TEXT("Mario Y position %i"), mario1.yPos);
