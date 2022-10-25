@@ -14,26 +14,27 @@
 #define mapHeight 730
 #define IdBaseTimer 1
 
-static HDC background;
-static HDC tube;
-static HDC stone;
-static HDC mario;
-static HDC marioL;
-static HDC walk;
-static HDC walkL;
-static HDC jumping;
-static HDC jumpingL;
+static HDC background;		//1216 x 730 
+static HDC tube;			//157 x 243
+static HDC stone;			//66 x 46
+static HDC mario;			//37 x 48
+static HDC marioL;			//37 x 48
+static HDC walk;			//37 x 48
+static HDC walkL;			//37 x 48
+static HDC jumping;			//37 x 48
+static HDC jumpingL;		//37 x 48
 
 static HBITMAP hBitmap;
 static BITMAP bm;
 static RECT rc;
+
 HWND hwnd;
 HDC hdc;
 PAINTSTRUCT ps;
 HBITMAP hbtm;
 
 
-typedef struct SObject
+typedef struct SObject            // Main struct of mario
 {
 	int xPos, yPos;
 	int runAnimation;
@@ -44,7 +45,7 @@ typedef struct SObject
 
 int JumpBase;
 
-void Jump(Pmario pmario)
+void Jump(Pmario pmario)		 // Gravity on earth
 {
 	if (!pmario->JumpController) {
 		JumpBase = pmario->yPos;
@@ -79,8 +80,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.cbSize = sizeof(WNDCLASSEX);
-	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);;
+	wc.hIcon = LoadIcon(hInstance, IDI_WINLOGO);
+	wc.hIconSm = LoadIcon(hInstance, IDI_WINLOGO);;
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 		//CreatePatternBrush((HBITMAP)LoadImageW(NULL, (LPCWSTR)L"D:\\Nikita\\image\\background.bmp",
@@ -106,10 +107,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ShowWindow(hwnd, nCmdShow);
 
 
-	
-	while (1) 
+		
+	while (1)												// Main loop
 	{
-		if (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) { // check the messages queue
+		if (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {	// Check the messages queue
 			if (msg.message == WM_QUIT) break;
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -160,7 +161,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		SetTimer(hwnd, IdBaseTimer, 10, NULL);
 
 		AddMenus(hwnd);
-		//PlaySoundW(TEXT("D:\\Nikita\\sound\\soundmario.wav"), NULL, SND_FILENAME | SND_ASYNC);
+		//PlaySoundW(TEXT(".\\sound\\soundmario.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		
 		hdc = GetDC(hwnd);
 
@@ -169,55 +170,55 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		mario1.JumpController = FALSE;
 		mario1.runAnimation = 0;
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\background.bmp"), //Background image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\background.bmp"), //Background image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		background = CreateCompatibleDC(hdc);
 		SelectObject(background, hBitmap);
 	
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\tube.bmp"), //Tube image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\tube.bmp"),		  //Tube image
 						   IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		tube = CreateCompatibleDC(hdc);
 		SelectObject(tube, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\stone.bmp"), //Stone image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\stone.bmp"),	  //Stone image
 						   IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		stone = CreateCompatibleDC(hdc);
 		SelectObject(stone, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\mario.bmp"), //mario image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\mario.bmp"),	  //mario image
 						   IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		mario = CreateCompatibleDC(hdc);
 		SelectObject(mario, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\marioL.bmp"), //mario left image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\marioL.bmp"),	  //mario left image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		marioL = CreateCompatibleDC(hdc);
 		SelectObject(marioL, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\walk.bmp"), //run image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\walk.bmp"),		  //run image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		walk = CreateCompatibleDC(hdc);
 		SelectObject(walk, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\walkL.bmp"), //run to left image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\walkL.bmp"),	  //run to left image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		walkL = CreateCompatibleDC(hdc);
 		SelectObject(walkL, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\jumping.bmp"), //jumping image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\jumping.bmp"),	  //jumping image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		jumping = CreateCompatibleDC(hdc);
 		SelectObject(jumping, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT("D:\\Nikita\\image\\jumpingL.bmp"), //jumping to left image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\jumpingL.bmp"),	  //jumping to left image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		jumpingL = CreateCompatibleDC(hdc);
@@ -307,13 +308,12 @@ int drow(HDC hdc)
 	hdcMem = CreateCompatibleDC(hdc);
 	oldBitmap = SelectObject(hdcMem, hBitmap);
 
-	BitBlt(hdc, 0, 0, mapWidth, mapHeight, background, 0, 0, SRCCOPY); // background
-	BitBlt(hdc, 1035, 340, 157, 243, tube, 0, 0, SRCCOPY); // tube
-	BitBlt(hdc, 370, 410, 66, 46, stone, 0, 0, SRCCOPY); //stone
+	BitBlt(hdc, 0, 0, mapWidth, mapHeight, background, 0, 0, SRCCOPY);	// background
+	BitBlt(hdc, 1035, 340, 157, 243, tube, 0, 0, SRCCOPY);				// tube
+	BitBlt(hdc, 370, 410, 66, 46, stone, 0, 0, SRCCOPY);				// stone
 	
 	
-	if (!mario1.speedX) mario1.runAnimation = 0;									//animation mario
-	
+	if (!mario1.speedX) mario1.runAnimation = 0;						//animation mario
 	
 	if (mario1.runAnimation == 0 || mario1.runAnimation == 1){
 		if (mario1.speedX < 0) 
