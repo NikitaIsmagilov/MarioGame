@@ -50,7 +50,7 @@ void Jump(Pmario pmario)		 // Gravity on earth
 	if (!pmario->JumpController) {
 		JumpBase = pmario->yPos;
 		pmario->JumpController = TRUE;
-		pmario->speedY = -40;
+		pmario->speedY = -50;
 	}
 }
 
@@ -65,10 +65,31 @@ void MarioMove(Pmario pmario) {
 		pmario->JumpController = FALSE;
 		pmario->speedY = 0;
 	}
-
 }
 
 Mario mario1;
+
+typedef struct TObject  //main struct of walls 
+{
+	int x, y;
+	int speedX, speedY;
+
+} wall, *Pwall;
+
+
+Pwall wallArray = NULL;
+int PwallArrayCounter = 0;
+
+
+void newWall(int x, int y)
+{
+	wall wallBrick = { x,y,0,0 };
+	PwallArrayCounter++;
+	wallArray = realloc(wallArray, (sizeof(*wallArray) * PwallArrayCounter)); 
+	wallArray[PwallArrayCounter - 1] = wallBrick;
+
+}
+
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -105,7 +126,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	HDC hdc = GetDC(hwnd);
 	ShowWindow(hwnd, nCmdShow);
-
 
 		
 	while (1)												// Main loop
@@ -161,7 +181,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		SetTimer(hwnd, IdBaseTimer, 10, NULL);
 
 		AddMenus(hwnd);
-		//PlaySoundW(TEXT(".\\sound\\soundmario.wav"), NULL, SND_FILENAME | SND_ASYNC);
+		PlaySoundW(TEXT(".\\sound\\soundmario.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		
 		hdc = GetDC(hwnd);
 
@@ -170,62 +190,75 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		mario1.JumpController = FALSE;
 		mario1.runAnimation = 0;
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\background.bmp"), //Background image
+
+		newWall(370, 410);
+		newWall(436, 410);
+		newWall(502, 410);
+		newWall(568, 410);
+		newWall(634, 410);
+
+		newWall(482, 230);
+		newWall(548, 230);
+		newWall(614, 230);
+
+
+
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\background.bmp"),			//Background image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		background = CreateCompatibleDC(hdc);
 		SelectObject(background, hBitmap);
 	
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\tube.bmp"),		  //Tube image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\tube.bmp"),				    //Tube image
 						   IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		tube = CreateCompatibleDC(hdc);
 		SelectObject(tube, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\stone.bmp"),	  //Stone image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\stone.bmp"),					//Stone image
 						   IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		stone = CreateCompatibleDC(hdc);
 		SelectObject(stone, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\mario.bmp"),	  //mario image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\mario.bmp"),					//mario image
 						   IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		mario = CreateCompatibleDC(hdc);
 		SelectObject(mario, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\marioL.bmp"),	  //mario left image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\marioL.bmp"),				//mario left image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		marioL = CreateCompatibleDC(hdc);
 		SelectObject(marioL, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\walk.bmp"),		  //run image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\walk.bmp"),					//run image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		walk = CreateCompatibleDC(hdc);
 		SelectObject(walk, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\walkL.bmp"),	  //run to left image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\walkL.bmp"),					//run to left image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		walkL = CreateCompatibleDC(hdc);
 		SelectObject(walkL, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\jumping.bmp"),	  //jumping image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\jumping.bmp"),				//jumping image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		jumping = CreateCompatibleDC(hdc);
 		SelectObject(jumping, hBitmap);
 
-		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\jumpingL.bmp"),	  //jumping to left image
+		hBitmap = (HBITMAP)LoadImage(NULL, TEXT(".\\image\\jumpingL.bmp"),				//jumping to left image
 			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(hBitmap, sizeof(bm), &bm);
 		jumpingL = CreateCompatibleDC(hdc);
 		SelectObject(jumpingL, hBitmap);
-		//If cant load image 
+		
 
-		if (hBitmap == NULL) {  
+		if (hBitmap == NULL) {															//If cant load image 
 			MessageBox(hwnd, L"Failed to load image", L"Error", MB_OK);
 		}
 		
@@ -310,10 +343,14 @@ int drow(HDC hdc)
 
 	BitBlt(hdc, 0, 0, mapWidth, mapHeight, background, 0, 0, SRCCOPY);	// background
 	BitBlt(hdc, 1035, 340, 157, 243, tube, 0, 0, SRCCOPY);				// tube
-	BitBlt(hdc, 370, 410, 66, 46, stone, 0, 0, SRCCOPY);				// stone
+	
+
+	for (int i= 0; i < PwallArrayCounter; i++) {
+		BitBlt(hdc, wallArray[i].x, wallArray[i].y, 66, 46, stone, 0, 0, SRCCOPY);				// stone
+	}
 	
 	
-	if (!mario1.speedX) mario1.runAnimation = 0;						//animation mario
+	if (!mario1.speedX) mario1.runAnimation = 0;									//animation mario when he runnig
 	
 	if (mario1.runAnimation == 0 || mario1.runAnimation == 1){
 		if (mario1.speedX < 0) 
@@ -328,14 +365,14 @@ int drow(HDC hdc)
 	}
 	
 	
-	if (mario1.JumpController == TRUE && mario1.speedX >= 0) {
+	if (mario1.JumpController == TRUE && mario1.speedX >= 0) {						//animation mario when he jumping
 		BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, jumping, 0, 0, SRCCOPY);
 	}
 	if (mario1.JumpController == TRUE && mario1.speedX < 0) {
 		BitBlt(hdc, mario1.xPos, mario1.yPos, 37, 48, jumpingL, 0, 0, SRCCOPY);
 	}
 
-	wsprintf(bufX, TEXT("Mario X position %i"), mario1.xPos); //Show position mario on screen
+	wsprintf(bufX, TEXT("Mario X position %i"), mario1.xPos);					    //Show position mario on screen
 	wsprintf(bufY, TEXT("Mario Y position %i"), mario1.yPos);
 
 
@@ -352,7 +389,7 @@ int Move(HWND hwnd)          //X 0 Y 535
 {
 	mario1.speedX = 0;
 	if (GetKeyState('A') < 0 && mario1.xPos > 0)  mario1.speedX = - 20;
-	if (GetKeyState('D') < 0)  mario1.speedX = 20;
+	if (GetKeyState('D') < 0 && mario1.xPos < 1160)  mario1.speedX = 20;
 	if (GetKeyState(VK_SPACE) < 0) Jump(&mario1);
 }
 
